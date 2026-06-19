@@ -1,19 +1,3 @@
-"""
-GEESE / HONK demo - all-cohort version (v1)
-
-Uses the two-phase all-cohort models:
-  Phase 1: behavior classification (9-class HLAC)
-  Phase 2: cohort x genotype (7-class)
-
-Input any cohort's pose data (.mat upload or test sample) and the demo
-predicts behavior over time + cohort + genotype. No cohort selection needed.
-
-Usage (local):
-    cd /data/moment
-    python3 app.py
-    http://localhost:7860
-"""
-
 import os
 import json
 import pickle
@@ -430,9 +414,6 @@ def chat_respond(message, history):
                       {"role": "assistant", "content": resp}]
 
 
-# ============================================================================
-# GRADIO
-# ============================================================================
 
 ANALYZER = None
 
