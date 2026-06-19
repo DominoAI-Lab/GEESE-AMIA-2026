@@ -1,3 +1,19 @@
+"""
+GEESE / HONK demo - all-cohort version (v1)
+
+Uses the two-phase all-cohort models:
+  Phase 1: behavior classification (9-class HLAC)
+  Phase 2: cohort x genotype (7-class)
+
+Input any cohort's pose data (.mat upload or test sample) and the demo
+predicts behavior over time + cohort + genotype. No cohort selection needed.
+
+Usage (local):
+    cd /data/moment
+    python3 app.py
+    http://localhost:7860
+"""
+
 import os
 import json
 import pickle
@@ -19,21 +35,25 @@ except ImportError:
     _HAS_HF = False
 
 
+
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 WINDOW_SIZE = 32
 FPS = 50
 STRIDE = WINDOW_SIZE // 2
 
 OUTPUT_DIR = "results/class/hlac/all/2phase_normalized2"
-PHASE1_MODEL = f"{OUTPUT_DIR}/phase1_behavior/best_model_hlac.pth"
+PHASE1_MODEL = f"{OUTPUT_DIR}/phase1_behavior/best_model_hlac_slim.pth"
 PHASE1_JSON = f"{OUTPUT_DIR}/phase1_behavior/results.json"
-PHASE2_MODEL = f"{OUTPUT_DIR}/phase2_genotype/best_model_genotype.pth"
+PHASE2_MODEL = f"{OUTPUT_DIR}/phase2_genotype/best_model_genotype_slim.pth"
 PHASE2_JSON = f"{OUTPUT_DIR}/phase2_genotype/results.json"
 
-COHORT_DIRS = {
-    'CHD8': 'results/class_chd8L_32',
-    'CNTNAP': 'results/class_cntnapL_32',
-    'FMR1': 'results/class_fmr1L_32',
+
+EXAMPLES = {
+    "CNTNAP - HOM": ("examples/CNTNAP_M4_20210309_0254_L.mat", "CNTNAP-HOM"),
+    "CNTNAP - WT":  ("examples/CNTNAP_M5_20210309_0255_L.mat", "CNTNAP-WT"),
+    "CHD8 - WT":    ("examples/CHD8_M1_20221119_0131_L.mat", "CHD8-WT"),
+    "FMR1 - HET":   ("examples/FX_M2_20211205_0302_L.mat", "FMR1-HET"),
+    "FMR1 - HET (2)": ("examples/FX_M8_20211204_0300_L.mat", "FMR1-HET"),
 }
 
 GENOTYPE_NAMES = ['WT', 'HET', 'HOM']  # ratgen 0/1/2
@@ -43,6 +63,7 @@ HLAC_SEMANTIC = {1: 'idle', 2: 'sniff', 3: 'groom', 4: 'scrunched', 5: 'reared',
 
 
 def behavior_display_names(behavior_names):
+    """Map 'HLAC_<raw>' -> semantic name; fall back to raw label if unknown."""
     out = []
     for name in behavior_names:
         try:
@@ -51,7 +72,6 @@ def behavior_display_names(behavior_names):
         except (IndexError, ValueError):
             out.append(name)
     return out
-
 
 
 BEHAVIOR_PALETTE = ['#6E8FD6', '#5FB49C', '#7C8AA0', '#E6B450', '#8C7AE6',
@@ -76,8 +96,6 @@ def resolve(path):
 def _softmax(logits):
     e = np.exp(logits - logits.max(axis=1, keepdims=True))
     return e / e.sum(axis=1, keepdims=True)
-
-
 
 
 class AllCohortAnalyzer:
@@ -214,57 +232,6 @@ def load_mat_file(file_path):
         return None, f"Error loading file: {str(e)}"
 
 
-_meta_cache = {}
-_windows_cache = {}
-
-
-def get_cohort_meta(cohort):
-    if cohort not in _meta_cache:
-        with open(resolve(f"{COHORT_DIRS[cohort]}/window_metadata.pkl"), 'rb') as f:
-            _meta_cache[cohort] = pickle.load(f)
-    return _meta_cache[cohort]
-
-
-def get_cohort_windows(cohort):
-    if cohort not in _windows_cache:
-        w = torch.load(resolve(f"{COHORT_DIRS[cohort]}/windows.pt"))
-        if isinstance(w, torch.Tensor):
-            w = w.numpy()
-        _windows_cache[cohort] = w
-    return _windows_cache[cohort]
-
-
-def list_sessions():
-    sessions = {}
-    for cohort in COHORT_DIRS:
-        try:
-            meta = get_cohort_meta(cohort)
-        except Exception as e:
-            print(f"Skip {cohort}: {e}")
-            continue
-        seen = {}
-        for m in meta:
-            fn = m['filename']
-            if fn not in seen:
-                seen[fn] = m.get('ratgen', None)
-        for fn, ratgen in seen.items():
-            gen = GENOTYPE_NAMES[ratgen] if ratgen is not None and ratgen < len(GENOTYPE_NAMES) else '?'
-            sessions[f"{cohort} | {fn} | true={cohort}-{gen}"] = (cohort, fn)
-    return sessions
-
-
-def get_session_windows(cohort, filename):
-    windows = get_cohort_windows(cohort)
-    meta = get_cohort_meta(cohort)
-    idx = [i for i, m in enumerate(meta) if m['filename'] == filename]
-    idx.sort(key=lambda i: meta[i]['frame_start'])
-    win = windows[idx]
-    ratgen = meta[idx[0]].get('ratgen', None)
-    true_gen = GENOTYPE_NAMES[ratgen] if ratgen is not None and ratgen < len(GENOTYPE_NAMES) else '?'
-    return win, f"{cohort}-{true_gen}"
-
-
-
 
 def _style_axis(ax):
     for s in ('top', 'right'):
@@ -292,7 +259,7 @@ def make_plots(analyzer, res, true_label=None):
     fig = plt.figure(figsize=(14, 12), facecolor='white')
     gs = fig.add_gridspec(3, 2, height_ratios=[1.1, 1.0, 0.55], hspace=0.45, wspace=0.25)
 
-    # > behavior distribution
+    # > Behavior distribution 
     ax = fig.add_subplot(gs[0, 0])
     counts = np.bincount(res['beh_pred'], minlength=n_beh)
     pct = counts / max(counts.sum(), 1) * 100
@@ -318,7 +285,7 @@ def make_plots(analyzer, res, true_label=None):
     ax.set_title('Behavior distribution', fontweight='bold', loc='left')
     _style_axis(ax)
 
-    # > cohort * genotype
+    # > Cohort x genotype 
     ax = fig.add_subplot(gs[0, 1])
     gx = np.arange(len(analyzer.geno_names))
     bar_colors = [GENO_COLOR.get(n.split('-')[1], COHORT_COLOR) for n in analyzer.geno_names]
@@ -337,7 +304,7 @@ def make_plots(analyzer, res, true_label=None):
     ax.set_title(f"Cohort x genotype  (pred: {res['top_geno']})", fontweight='bold', loc='left')
     _style_axis(ax)
 
-    # > behavior sequence
+    # > Behavior sequence
     ax = fig.add_subplot(gs[1, :])
     t = res['timestamps']
     pred = res['beh_pred']
@@ -357,7 +324,7 @@ def make_plots(analyzer, res, true_label=None):
         ax.legend(loc='upper right', fontsize=8, frameon=False)
     _style_axis(ax)
 
-    # > cohort prediction
+    # > Cohort prediction 
     ax = fig.add_subplot(gs[2, :])
     cohorts = list(res['cohort_prob'].keys())
     vals = [res['cohort_prob'][c] for c in cohorts]
@@ -463,59 +430,58 @@ def chat_respond(message, history):
                       {"role": "assistant", "content": resp}]
 
 
-
+# ============================================================================
+# GRADIO
+# ============================================================================
 
 ANALYZER = None
-_SESSIONS = {}
+
+
+def _run_mat(path, true_geno=None):
+    pose, info = load_mat_file(path)
+    if pose is None:
+        return info, None, None
+    hlac_raw = info.get('hlac') if isinstance(info, dict) else None
+    res = ANALYZER.analyze(pose, hlac_raw=hlac_raw, true_geno=true_geno)
+    if res is None:
+        return "Not enough frames for one window.", None, None
+    if true_geno is None and isinstance(info, dict) and 'ratgen' in info:
+        rg = info['ratgen']
+        true_geno = GENOTYPE_NAMES[rg] if rg < len(GENOTYPE_NAMES) else None
+    current.update(analyzer=ANALYZER, res=res, true_label=true_geno)
+    dur = info.get('duration_sec', 0) if isinstance(info, dict) else 0
+    status = f"Duration {dur:.1f}s. Predicted: {res['top_cohort']} / {res['top_gen']}"
+    if true_geno:
+        status += f"  (true: {true_geno})"
+    return status, make_plots(ANALYZER, res, true_geno), make_excel(ANALYZER, res)
 
 
 def on_upload(file):
     if file is None:
         return "No file.", None, None
-    pose, info = load_mat_file(file.name)
-    if pose is None:
-        return info, None, None
-    hlac_raw = info.get('hlac') if isinstance(info, dict) else None
-    res = ANALYZER.analyze(pose, hlac_raw=hlac_raw)
-    if res is None:
-        return "Not enough frames for one window.", None, None
-    true_label = None
-    if isinstance(info, dict) and 'ratgen' in info:
-        rg = info['ratgen']
-        true_label = GENOTYPE_NAMES[rg] if rg < len(GENOTYPE_NAMES) else None
-    current.update(analyzer=ANALYZER, res=res, true_label=true_label)
-    status = (f"Frames: {info['n_frames']}, duration {info['duration_sec']:.1f}s. "
-              f"Predicted: {res['top_cohort']} / {res['top_gen']}")
-    return status, make_plots(ANALYZER, res, true_label), make_excel(ANALYZER, res)
+    return _run_mat(file.name)
 
 
-def on_sample(label):
-    if not label or label not in _SESSIONS:
-        return "Pick a sample.", None, None
-    cohort, filename = _SESSIONS[label]
-    win, true_label = get_session_windows(cohort, filename)
-    beh_probs, geno_probs = ANALYZER._classify_batch(win)
-    timestamps = [i * (WINDOW_SIZE / FPS) for i in range(len(win))]
-    true_geno = true_label if true_label in ANALYZER.geno_names else None
-    res = ANALYZER._aggregate(beh_probs, geno_probs, timestamps, true_geno=true_geno)
-    current.update(analyzer=ANALYZER, res=res, true_label=true_label)
-    status = f"True: {true_label}. Predicted: {res['top_cohort']} / {res['top_gen']}"
-    return status, make_plots(ANALYZER, res, true_label), make_excel(ANALYZER, res)
+def on_example(label):
+    if not label or label not in EXAMPLES:
+        return "Pick an example.", None, None
+    path, true_geno = EXAMPLES[label]
+    return _run_mat(path, true_geno=true_geno)
 
 
 def build_interface():
     with gr.Blocks(title="HONK: All-Cohort Phenotyping") as demo:
         gr.Markdown("# HONK - Behavioral Phenotyping\n"
-                    "Upload a `.mat` file or pick a test sample. "
+                    "Upload a `.mat` file or pick a built-in example. "
                     "The model predicts behavior over time, cohort, and genotype.")
 
         with gr.Tab("Upload .mat"):
             up = gr.File(label=".mat file", file_types=[".mat"])
             up_btn = gr.Button("Analyze", variant="primary")
 
-        with gr.Tab("Test sample"):
-            sample_dd = gr.Dropdown(choices=list(_SESSIONS.keys()), label="Session")
-            sample_btn = gr.Button("Analyze", variant="primary")
+        with gr.Tab("Example"):
+            ex_dd = gr.Dropdown(choices=list(EXAMPLES.keys()), label="Example recording")
+            ex_btn = gr.Button("Analyze", variant="primary")
 
         status = gr.Textbox(label="Result", interactive=False)
         plot = gr.Plot(label="Analysis")
@@ -527,7 +493,7 @@ def build_interface():
                          show_label=False)
 
         up_btn.click(on_upload, [up], [status, plot, excel])
-        sample_btn.click(on_sample, [sample_dd], [status, plot, excel])
+        ex_btn.click(on_example, [ex_dd], [status, plot, excel])
         msg.submit(chat_respond, [msg, chatbot], [chatbot]).then(lambda: "", None, [msg])
 
     return demo
@@ -537,9 +503,6 @@ if __name__ == "__main__":
     print("Loading models...")
     ANALYZER = AllCohortAnalyzer()
     ANALYZER.load()
-    print("Listing test sessions...")
-    _SESSIONS = list_sessions()
-    print(f"{len(_SESSIONS)} sessions available.")
     demo = build_interface()
     theme = gr.themes.Soft(primary_hue="indigo", secondary_hue="slate",
                            neutral_hue="slate", font=["system-ui", "sans-serif"])
