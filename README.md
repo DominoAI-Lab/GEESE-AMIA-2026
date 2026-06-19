@@ -1,28 +1,18 @@
-# GEESE: Genotype-aware End-to-End Spatio-temporal Embeddings
+---
+title: HONK Behavioral Phenotyping
+emoji: 🪿
+colorFrom: indigo
+colorTo: gray
+sdk: gradio
+app_file: app.py
+pinned: false
+---
 
-Interactive demo (HONK) for behavioral phenotyping of autism-associated rat models from 3D pose data
+# HONK: Behavioral Phenotyping
 
-## Overview
-
-HONK analyzes mouse behavioral sequences and provides:
-1. Behavior classification and genotype prediction
-2. Behavioral manifold visualization
-3. Natural language querying of analysis results
-4. Export to Excel
-
-## Usage
-
-```bash
-pip install -r requirements.txt
-python3 app.py
-```
+Interactive demo built on the GEESE pipeline. Upload mouse 3D pose data (.mat)
+or pick a test sample; the model predicts behavior over time, cohort, and genotype.
 
 
-## Deployment
-
-A live interactive version on Hugging Face Spaces is planned.
-**GPU grant from Hugging Face is pending approval**; the public demo will go live once the grant is approved.
-
-## Citation
-
-To appear: AMIA Annual Symposium 2026.
+Data: 3D pose recordings from the socialDANNCE dataset
+(Harvard Dataverse, CC0). Please cite the original dataset when reusing.
