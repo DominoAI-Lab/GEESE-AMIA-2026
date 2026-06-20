@@ -4,7 +4,7 @@ An interactive demo for behavioral phenotyping of rodent models from 3D pose
 recordings. Given a recording, it predicts behavior over time, cohort, and
 genotype, and lets you query the results through a chat assistant.
 
-** 🪿📣 GEESE-HONK (interactive live demo):** https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK
+**🪿📣 GEESE-HONK (interactive live demo):** https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK
 
 ## Usage
 
