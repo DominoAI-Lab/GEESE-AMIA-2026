@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Behavioral phenotyping of rodent models from 3D pose recordings —
+  Behavioral phenotyping of rodent models from 3D pose recordings that
   predicts behavior over time, cohort, and genotype, with a chat assistant
   for querying the results.
 </p>
