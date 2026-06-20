@@ -67,10 +67,13 @@ a time-series foundation model.
 ## Citation
 
 ```bibtex
-@article{ding2026geese,
-  title   = {GEESE: Genotype-aware End-to-End Spatio-temporal Embedding for Behavioral Phenotyping},
-  author  = {Ding, Yiran and Gao, Yuen and Qian, Chunqi and Cui, Zijun},
-  journal = {arXiv preprint arXiv:2605.24370},
-  year    = {2026}
+@misc{ding2026geesegenotypeawareendtoendspatiotemporal,
+      title={GEESE: Genotype-aware End-to-End Spatio-temporal Embedding for Behavioral Phenotyping}, 
+      author={Yiran Ding and Yuen Gao and Chunqi Qian and Zijun Cui},
+      year={2026},
+      eprint={2605.24370},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2605.24370}, 
 }
 ```
