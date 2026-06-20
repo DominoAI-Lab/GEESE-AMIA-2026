@@ -487,5 +487,4 @@ if __name__ == "__main__":
     demo = build_interface()
     theme = gr.themes.Soft(primary_hue="indigo", secondary_hue="slate",
                            neutral_hue="slate", font=["system-ui", "sans-serif"])
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False,
-                show_error=True, theme=theme)
+    demo.launch(show_error=True, theme=theme, ssr_mode=False)
