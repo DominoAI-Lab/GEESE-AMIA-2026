@@ -1,15 +1,46 @@
-# 🪿 GEESE
+<h1 align="center">🪿 GEESE</h1>
 
-An interactive demo for behavioral phenotyping of rodent models from 3D pose
-recordings. Given a recording, it predicts behavior over time, cohort, and
-genotype, and lets you query the results through a chat assistant.
+<p align="center">
+  <b>Genotype-aware End-to-End Spatio-temporal Embedding for Behavioral Phenotyping</b>
+</p>
 
-**🪿📣 GEESE-HONK (interactive live demo):** https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK
+<p align="center">
+  Behavioral phenotyping of rodent models from 3D pose recordings —
+  predicts behavior over time, cohort, and genotype, with a chat assistant
+  for querying the results.
+</p>
+
+<p align="center">
+  <a href="https://arxiv.org/abs/2605.24370">
+    <img src="https://img.shields.io/badge/📄%20arXiv-2605.24370-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv"/>
+  </a>
+  &nbsp;
+  <a href="https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK">
+    <img src="https://img.shields.io/badge/🪿📣%20GEESE--HONK-Live%20Demo-FFD21E?style=for-the-badge" alt="Live Demo"/>
+  </a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/Presented%20at-AMIA%202026-2E7D32?style=for-the-badge" alt="AMIA 2026"/>
+</p>
+
+<p align="center">
+  <b>Yiran Ding</b><sup>1</sup> &nbsp;&nbsp;
+  <b>Yuen Gao</b><sup>2</sup> &nbsp;&nbsp;
+  <b>Chunqi Qian</b><sup>2</sup> &nbsp;&nbsp;
+  <b>Zijun Cui</b><sup>1</sup>
+</p>
+
+<p align="center">
+  <sup>1</sup>Department of Computer Science and Engineering, Michigan State University &nbsp;&nbsp;
+  <sup>2</sup>Department of Radiology, Michigan State University
+</p>
+
+---
 
 ## Usage
 
-Open the live demo, then either upload a `.mat` recording or pick a built-in
-example, and click **Analyze**. The app returns:
+Open the [live demo](https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK),
+then either upload a `.mat` recording or pick a built-in example, and click
+**Analyze**. The app returns:
 
 - a behavior distribution and a behavior timeline,
 - cohort and genotype predictions (with probabilities),
@@ -23,9 +54,23 @@ pip install -r requirements.txt
 python app.py
 ```
 
-
-
 ## Data
 
 Example recordings come from the socialDANNCE dataset
 ([Harvard Dataverse](https://dataverse.harvard.edu/dataverse/socialDANNCE_data), CC0).
+
+## Acknowledgements
+
+This work builds on [MOMENT](https://github.com/moment-timeseries-foundation-model/moment),
+a time-series foundation model.
+
+## Citation
+
+```bibtex
+@article{ding2026geese,
+  title   = {GEESE: Genotype-aware End-to-End Spatio-temporal Embedding for Behavioral Phenotyping},
+  author  = {Ding, Yiran and Gao, Yuen and Qian, Chunqi and Cui, Zijun},
+  journal = {arXiv preprint arXiv:2605.24370},
+  year    = {2026}
+}
+```
