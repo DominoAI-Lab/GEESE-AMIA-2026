@@ -1,18 +1,31 @@
----
-title: HONK Behavioral Phenotyping
-emoji: 🪿
-colorFrom: indigo
-colorTo: gray
-sdk: gradio
-app_file: app.py
-pinned: false
----
+# GEESE
 
-# HONK: Behavioral Phenotyping
+An interactive demo for behavioral phenotyping of rodent models from 3D pose
+recordings. Given a recording, it predicts behavior over time, cohort, and
+genotype, and lets you query the results through a chat assistant.
 
-Interactive demo built on the GEESE pipeline. Upload mouse 3D pose data (.mat)
-or pick a test sample; the model predicts behavior over time, cohort, and genotype.
+**GEESE-HONK (interactive live demo):** https://huggingface.co/spaces/EvilRagdollCat/GEESE-HONK
+
+## Usage
+
+Open the live demo, then either upload a `.mat` recording or pick a built-in
+example, and click **Analyze**. The app returns:
+
+- a behavior distribution and a behavior timeline,
+- cohort and genotype predictions (with probabilities),
+- a downloadable Excel summary,
+- a chat box for asking questions about the results.
+
+## Running locally
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
 
 
-Data: 3D pose recordings from the socialDANNCE dataset
-(Harvard Dataverse, CC0). Please cite the original dataset when reusing.
+
+## Data
+
+Example recordings come from the socialDANNCE dataset
+([Harvard Dataverse](https://dataverse.harvard.edu/dataverse/socialDANNCE_data), CC0).
