@@ -447,6 +447,10 @@ def on_example(label):
     if not label or label not in EXAMPLES:
         return "Pick an example.", None, None
     path, true_geno = EXAMPLES[label]
+    try:
+        path = resolve(path)
+    except Exception as e:
+        return f"Could not load example: {e}", None, None
     return _run_mat(path, true_geno=true_geno)
 
 
